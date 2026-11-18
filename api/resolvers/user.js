@@ -1045,7 +1045,7 @@ export default {
 
       const [fromDate, toDate] = whenRange(when, from, to)
       const granularity = timeUnitForRange([fromDate, toDate]).toUpperCase()
-      const [{ stacked }] = await models.$queryRaw`
+      const [row] = await models.$queryRaw`
         SELECT sum("AggPayOut"."sumMtokens") as stacked
         FROM "AggPayOut"
         WHERE "AggPayOut"."userId" = ${user.id}
@@ -1054,9 +1054,8 @@ export default {
         AND "AggPayOut"."granularity" = ${granularity}::"AggGranularity"
         AND "AggPayOut"."slice" = 'USER_BY_TYPE'
         AND "AggPayOut"."payInType" NOT IN ('WITHDRAWAL', 'AUTO_WITHDRAWAL', 'PROXY_PAYMENT', 'BUY_CREDITS')
-        GROUP BY "AggPayOut"."userId"
       `
-      return (stacked && msatsToSats(stacked)) || 0
+      return (row?.stacked && msatsToSats(row.stacked)) || 0
     },
     spent: async (user, { when, from, to }, { models, me }) => {
       if ((!me || me.id !== user.id) && user.hideFromTopUsers) {
@@ -1069,7 +1068,7 @@ export default {
 
       const [fromDate, toDate] = whenRange(when, from, to)
       const granularity = timeUnitForRange([fromDate, toDate]).toUpperCase()
-      const [{ spent }] = await models.$queryRaw`
+      const [row] = await models.$queryRaw`
         SELECT sum("AggPayIn"."sumMcost") as spent
         FROM "AggPayIn"
         WHERE "AggPayIn"."userId" = ${user.id}
@@ -1078,10 +1077,9 @@ export default {
         AND "AggPayIn"."granularity" = ${granularity}::"AggGranularity"
         AND "AggPayIn"."slice" = 'USER_BY_TYPE'
         AND "AggPayIn"."payInType" NOT IN ('WITHDRAWAL', 'AUTO_WITHDRAWAL', 'PROXY_PAYMENT', 'BUY_CREDITS')
-        GROUP BY "AggPayIn"."userId"
       `
 
-      return (spent && msatsToSats(spent)) || 0
+      return (row?.spent && msatsToSats(row.spent)) || 0
     },
     referrals: async (user, { when, from, to }, { models, me }) => {
       if ((!me || me.id !== user.id) && user.hideFromTopUsers) {
